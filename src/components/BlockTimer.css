@@ -1,4 +1,4 @@
-/* Block Timer Styles */
+/* Block Timer Styles with 3D HUD Effect */
 
 .block-timer {
     display: flex;
@@ -6,6 +6,7 @@
     align-items: center;
     gap: var(--spacing-xl);
     padding: var(--spacing-2xl);
+    perspective: 1000px;
 }
 
 .block-timer__skill {
@@ -16,6 +17,8 @@
     background: var(--bg-card);
     border-radius: var(--radius-lg);
     border: 1px solid var(--border-subtle);
+    transform: translateZ(10px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 .block-timer__skill-icon {
@@ -34,26 +37,32 @@
     position: relative;
     width: 280px;
     height: 280px;
+    transform-style: preserve-3d;
+    animation: float 6s ease-in-out infinite;
 }
 
 .block-timer__circle {
     width: 100%;
     height: 100%;
-    transform: rotate(-90deg);
+    transform: rotate(-90deg) rotateX(10deg);
+    /* 3D tilt */
+    filter: drop-shadow(0 0 20px rgba(255, 70, 85, 0.2));
 }
 
 .block-timer__track {
     stroke: var(--bg-tertiary);
+    stroke-width: 6;
 }
 
 .block-timer__progress {
     stroke: var(--accent-red);
-    filter: drop-shadow(0 0 10px var(--accent-red));
+    filter: drop-shadow(0 0 15px var(--accent-red));
+    stroke-linecap: round;
 }
 
 .block-timer--urgent .block-timer__progress {
     stroke: var(--accent-gold);
-    filter: drop-shadow(0 0 20px var(--accent-gold));
+    filter: drop-shadow(0 0 30px var(--accent-gold));
     animation: pulse 1s infinite;
 }
 
@@ -61,18 +70,20 @@
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%) translateZ(40px);
+    /* Push forward in 3D */
     font-family: var(--font-display);
     font-weight: 700;
     font-size: 4rem;
     letter-spacing: 0.05em;
     color: var(--text-primary);
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
 }
 
 .block-timer--urgent .block-timer__time {
     color: var(--accent-gold);
-    text-shadow: 0 0 20px var(--accent-gold);
-    animation: glow 1s infinite;
+    text-shadow: 0 0 30px var(--accent-gold);
+    animation: glitch 2s infinite;
 }
 
 .block-timer__status {
@@ -83,11 +94,13 @@
     letter-spacing: 0.2em;
     color: var(--accent-red);
     animation: pulse 2s infinite;
+    transform: translateZ(20px);
 }
 
 .block-timer__controls {
     display: flex;
     gap: var(--spacing-md);
+    transform: translateZ(10px);
 }
 
 .block-timer__warning {
@@ -99,4 +112,6 @@
     font-weight: 700;
     color: var(--accent-gold);
     animation: pulse 0.5s infinite;
+    transform: translateZ(50px);
+    box-shadow: 0 0 30px rgba(255, 229, 92, 0.2);
 }

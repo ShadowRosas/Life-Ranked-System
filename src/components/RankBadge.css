@@ -49,7 +49,8 @@
 
 /* Radiant special glow */
 .rank-badge--radiant .rank-badge__icon {
-    animation: fireGlow 2s infinite;
+    animation: fireGlow 2s infinite, float 3s ease-in-out infinite;
+    transform-style: preserve-3d;
 }
 
 /* Immortal fire effect */
@@ -57,4 +58,10 @@
 .rank-badge--immortal2 .rank-badge__icon,
 .rank-badge--immortal3 .rank-badge__icon {
     filter: drop-shadow(0 0 15px #ef4444) drop-shadow(0 0 30px #ff8800);
+    animation: float 4s ease-in-out infinite;
+}
+
+/* Hover effect for all badges if in a card */
+.skill-card:hover .rank-badge__icon {
+    transform: translateZ(20px) rotateY(10deg);
 }

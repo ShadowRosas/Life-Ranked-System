@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Pause, Play, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import './BlockTimer.css';
 
 interface BlockTimerProps {
@@ -23,7 +23,6 @@ export function BlockTimer({
     skillIcon
 }: BlockTimerProps) {
     const [remainingSeconds, setRemainingSeconds] = useState(durationMinutes * 60);
-    const [isPaused, setIsPaused] = useState(false);
     const [showAbandonConfirm, setShowAbandonConfirm] = useState(false);
 
     const totalSeconds = durationMinutes * 60;
@@ -32,7 +31,6 @@ export function BlockTimer({
     const isFinalCountdown = remainingSeconds <= 10;
 
     useEffect(() => {
-        if (isPaused) return;
 
         const interval = setInterval(() => {
             setRemainingSeconds(prev => {
@@ -46,7 +44,7 @@ export function BlockTimer({
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [isPaused, onComplete]);
+    }, [onComplete]);
 
     const formatTime = useCallback((seconds: number) => {
         const mins = Math.floor(seconds / 60);
@@ -101,16 +99,11 @@ export function BlockTimer({
             </motion.div>
 
             <div className="block-timer__status">
-                {isPaused ? 'PAUSED' : 'RANKED BLOCK ACTIVE'}
+                RANKED BLOCK ACTIVE
             </div>
 
             <div className="block-timer__controls">
-                <button
-                    className="btn btn-secondary btn-icon"
-                    onClick={() => setIsPaused(!isPaused)}
-                >
-                    {isPaused ? <Play size={20} /> : <Pause size={20} />}
-                </button>
+                <div className="block-timer__controls-spacer"></div>
 
                 <button
                     className={`btn ${showAbandonConfirm ? 'btn-danger' : 'btn-secondary'}`}

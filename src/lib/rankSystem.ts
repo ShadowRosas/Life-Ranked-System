@@ -7,24 +7,24 @@ import { Rank, RankConfig, RadiantLevel, Skill, LpChangeEvent } from '../types';
 // Rank configurations ordered from lowest to highest
 export const RANK_CONFIGS: RankConfig[] = [
     { rank: 'iron', name: 'Iron', nameEs: 'Hierro', minHours: 0, divisions: 3, lpPerDivision: 100, color: '#5a5a5a', glowColor: '#7a7a7a' },
-    { rank: 'bronze', name: 'Bronze', nameEs: 'Bronce', minHours: 15, divisions: 3, lpPerDivision: 100, color: '#cd7f32', glowColor: '#da9655' },
-    { rank: 'silver', name: 'Silver', nameEs: 'Plata', minHours: 35, divisions: 3, lpPerDivision: 100, color: '#c0c0c0', glowColor: '#e8e8e8' },
-    { rank: 'gold', name: 'Gold', nameEs: 'Oro', minHours: 65, divisions: 3, lpPerDivision: 100, color: '#ffd700', glowColor: '#ffe55c' },
-    { rank: 'platinum', name: 'Platinum', nameEs: 'Platino', minHours: 105, divisions: 3, lpPerDivision: 100, color: '#00cec9', glowColor: '#55efc4' },
-    { rank: 'diamond', name: 'Diamond', nameEs: 'Diamante', minHours: 160, divisions: 3, lpPerDivision: 100, color: '#a855f7', glowColor: '#c084fc' },
-    { rank: 'immortal1', name: 'Immortal 1', nameEs: 'Inmortal 1', minHours: 230, divisions: 1, lpPerDivision: 100, color: '#ef4444', glowColor: '#f87171' },
-    { rank: 'immortal2', name: 'Immortal 2', nameEs: 'Inmortal 2', minHours: 310, divisions: 1, lpPerDivision: 100, color: '#dc2626', glowColor: '#ef4444' },
+    { rank: 'bronze', name: 'Bronze', nameEs: 'Bronce', minHours: 20, divisions: 3, lpPerDivision: 100, color: '#cd7f32', glowColor: '#da9655' },
+    { rank: 'silver', name: 'Silver', nameEs: 'Plata', minHours: 60, divisions: 3, lpPerDivision: 100, color: '#c0c0c0', glowColor: '#e8e8e8' },
+    { rank: 'gold', name: 'Gold', nameEs: 'Oro', minHours: 120, divisions: 3, lpPerDivision: 100, color: '#ffd700', glowColor: '#ffe55c' },
+    { rank: 'platinum', name: 'Platinum', nameEs: 'Platino', minHours: 200, divisions: 3, lpPerDivision: 100, color: '#00cec9', glowColor: '#55efc4' },
+    { rank: 'diamond', name: 'Diamond', nameEs: 'Diamante', minHours: 280, divisions: 3, lpPerDivision: 100, color: '#a855f7', glowColor: '#c084fc' },
+    { rank: 'immortal1', name: 'Immortal 1', nameEs: 'Inmortal 1', minHours: 350, divisions: 1, lpPerDivision: 100, color: '#ef4444', glowColor: '#f87171' },
+    { rank: 'immortal2', name: 'Immortal 2', nameEs: 'Inmortal 2', minHours: 380, divisions: 1, lpPerDivision: 100, color: '#dc2626', glowColor: '#ef4444' },
     { rank: 'immortal3', name: 'Immortal 3', nameEs: 'Inmortal 3', minHours: 400, divisions: 1, lpPerDivision: 100, color: '#b91c1c', glowColor: '#dc2626' },
-    { rank: 'radiant', name: 'Radiant', nameEs: 'Radiante', minHours: 550, divisions: 1, lpPerDivision: 200, color: '#ffe55c', glowColor: '#fff9c4' },
+    { rank: 'radiant', name: 'Radiant', nameEs: 'Radiante', minHours: 450, divisions: 1, lpPerDivision: 200, color: '#ffe55c', glowColor: '#fff9c4' },
 ];
 
 // Radiant internal thresholds (exponential scaling)
-export const RADIANT_THRESHOLDS: { level: RadiantLevel; minLp: number; name: string }[] = [
-    { level: 'low', minLp: 0, name: 'Radiante Bajo' },
-    { level: 'mid', minLp: 200, name: 'Radiante Medio' },
-    { level: 'high', minLp: 500, name: 'Radiante Alto' },
-    { level: 'elite', minLp: 1000, name: 'Radiante Élite' },
-    { level: 'peak', minLp: 2000, name: 'Radiante #1' },
+export const RADIANT_THRESHOLDS: { level: RadiantLevel; minLp: number; name: string; hours: number }[] = [
+    { level: 'low', minLp: 0, name: 'Radiante Bajo', hours: 550 },
+    { level: 'mid', minLp: 200, name: 'Radiante Medio', hours: 650 },
+    { level: 'high', minLp: 500, name: 'Radiante Alto', hours: 800 },
+    { level: 'elite', minLp: 1000, name: 'Radiante Élite', hours: 900 },
+    { level: 'peak', minLp: 2000, name: 'Radiante #1', hours: 1000 },
 ];
 
 // LP constants
@@ -90,25 +90,71 @@ export function getRankDisplayName(rank: Rank, division: number, radiantLevel?: 
     return `${config.nameEs} ${division}`;
 }
 
+// Calculate Hidden MMR (Quality Hours)
+// Uses an exponential decay for early hours (fast learning) and logarithmic clamping for late hours (diminishing returns)
+// Then applies a WinRate multiplier to determine "Quality"
+export function calculateMMR(skill: Skill): number {
+    const hours = skill.totalMinutes / 60;
+
+    // Win Rate Multiplier: 50% WR = 1x. 100% WR = 1.5x. 0% WR = 0.5x.
+    // This rewards quality practice.
+    const totalGames = skill.wins + skill.losses + skill.abandons;
+    let wrMultiplier = 1;
+
+    if (totalGames > 0) {
+        const winRate = skill.wins / totalGames;
+        wrMultiplier = 0.5 + (winRate); // Maps 0.0->0.5, 0.5->1.0, 1.0->1.5
+    }
+
+    // Base MMR is hours * multiplier
+    // This maps conceptually to the "Estimated Effective Hours"
+    return hours * wrMultiplier;
+}
+
+// Calculate Base LP based on duration (Gaussian Distribution)
+// Peak optimal flow state: ~45 mins. Max LP: 30.
+// Penalizes too short (<10m) and too long (>90m) sessions.
+export function calculateBaseLp(minutes: number): number {
+    if (minutes < 5) return 0; // Minimum 5 mins to score
+
+    // Gaussian Parameters
+    const maxLp = 30;
+    const optimalDuration = 45; // Center of the bell curve
+    const tolerance = 25;       // Standard deviation controls the width
+
+    // Formula: Max * e^( -0.5 * ((x - center) / tolerance)^2 )
+    const exponent = -0.5 * Math.pow((minutes - optimalDuration) / tolerance, 2);
+    const lp = maxLp * Math.exp(exponent);
+
+    return Math.max(1, Math.round(lp));
+}
+
 // Calculate LP change for a block result
 export function calculateLpChange(
     skill: Skill,
-    result: 'win' | 'loss' | 'abandon'
+    result: 'win' | 'loss' | 'abandon',
+    durationMinutes: number
 ): LpChangeEvent {
     let baseChange = 0;
     let newStreak = skill.currentStreak;
 
+    const potentialLp = calculateBaseLp(durationMinutes);
+
     switch (result) {
         case 'win':
-            baseChange = LP_WIN;
+            baseChange = potentialLp;
             newStreak = skill.currentStreak >= 0 ? skill.currentStreak + 1 : 1;
             break;
         case 'loss':
-            baseChange = LP_LOSS;
+            baseChange = -potentialLp; // Symmetry in risk/reward
             newStreak = skill.currentStreak <= 0 ? skill.currentStreak - 1 : -1;
             break;
         case 'abandon':
-            baseChange = LP_ABANDON;
+            // Abandon is worse than loss, maybe 1.5x penalty?
+            baseChange = -Math.floor(potentialLp * 1.5);
+            // Minimum penalty of -30 regardless of time if standard abandon logic applies?
+            // Or just scale it. Let's scale it.
+            if (baseChange === 0) baseChange = -5; // Minimum penalty for abandon
             newStreak = skill.currentStreak <= 0 ? skill.currentStreak - 1 : -1;
             break;
     }
@@ -154,9 +200,8 @@ export function calculateLpChange(
         }
     }
 
-    // Handle demotion
     if (newLp < 0) {
-        const config = getRankConfig(skill.rank);
+        // const config = getRankConfig(skill.rank); // Unused
 
         if (skill.division > 1) {
             // Move down a division
@@ -197,7 +242,7 @@ export function applyLpChange(skill: Skill, result: 'win' | 'loss' | 'abandon', 
     updatedSkill: Skill;
     event: LpChangeEvent;
 } {
-    const event = calculateLpChange(skill, result);
+    const event = calculateLpChange(skill, result, blockDuration);
 
     let newStreak = skill.currentStreak;
     if (result === 'win') {

@@ -63,14 +63,20 @@ export interface Skill {
     worstStreak: number;
     peakRank: Rank;
     peakDivision: number;
+    peakDivision: number;
     history: BlockResult[];
     protectedPromotion: boolean; // free loss after promotion
+    mmr: number; // Hidden Matchmaking Rating (Quality Hours)
     createdAt: string;
 }
 
 // Player/user state
 export interface PlayerState {
     id: string;
+    googleId?: string;
+    email?: string;
+    name?: string;
+    picture?: string;
     createdAt: string;
     currentSeason: number;
     seasonStartDate: string;
@@ -79,6 +85,7 @@ export interface PlayerState {
     activeBlockId: string | null;
     activeSkillId: string | null;
     activeBlockStartTime: string | null;
+    activeBlockDuration: number | null; // Planned duration in minutes
 }
 
 // User preferences

@@ -26,6 +26,7 @@ export function createInitialState(): PlayerState {
         activeBlockId: null,
         activeSkillId: null,
         activeBlockStartTime: null,
+        activeBlockDuration: null,
     };
 }
 

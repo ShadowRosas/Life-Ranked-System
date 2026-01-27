@@ -48,6 +48,10 @@ const SettingsSchema = new mongoose.Schema({
 
 const PlayerSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
+    googleId: { type: String, unique: true },
+    email: { type: String, unique: true },
+    name: String,
+    picture: String,
     createdAt: String,
     currentSeason: { type: Number, default: 1 },
     seasonStartDate: String,
@@ -55,7 +59,8 @@ const PlayerSchema = new mongoose.Schema({
     settings: SettingsSchema,
     activeBlockId: String,
     activeSkillId: String,
-    activeBlockStartTime: String
+    activeBlockStartTime: String,
+    activeBlockDuration: Number
 });
 
 export const Player = mongoose.model('Player', PlayerSchema);

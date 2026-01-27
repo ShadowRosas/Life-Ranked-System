@@ -9,7 +9,7 @@ import { BlockTimer } from '../components/BlockTimer';
 import './ActiveBlock.css';
 
 export function ActiveBlock() {
-    const { state, endBlock, cancelBlock } = useGame();
+    const { state, endBlock } = useGame();
     const navigate = useNavigate();
 
     const skill = state.skills.find(s => s.id === state.activeSkillId);
@@ -46,7 +46,7 @@ export function ActiveBlock() {
                 </div>
 
                 <BlockTimer
-                    durationMinutes={state.settings.blockDuration}
+                    durationMinutes={state.activeBlockDuration || state.settings.blockDuration}
                     onComplete={handleComplete}
                     onAbandon={handleAbandon}
                     skillName={skill.name}

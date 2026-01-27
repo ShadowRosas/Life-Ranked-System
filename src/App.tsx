@@ -2,9 +2,9 @@
 // APP COMPONENT (ROUTING)
 // ==========================================
 
-import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
-import { GameProvider, useGame } from './context/GameContext';
+
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { GameProvider } from './context/GameContext';
 import { Navigation } from './components/Navigation';
 import { Dashboard } from './pages/Dashboard';
 import { ActiveBlock } from './pages/ActiveBlock';
@@ -13,30 +13,24 @@ import { BlockResult } from './pages/BlockResult';
 import { History } from './pages/History';
 import { Profile } from './pages/Profile';
 import { SkillManager } from './pages/SkillManager';
+import { StartBlock } from './pages/StartBlock';
 
-// Helper component to handle starting a block from URL
-function StartBlockRoute() {
-    const { skillId } = useParams();
-    const { startBlock, state } = useGame();
-    const navigate = useNavigate();
 
-    useEffect(() => {
-        if (skillId) {
-            // Check if skill exists
-            const skill = state.skills.find(s => s.id === skillId);
-            if (skill) {
-                startBlock(skillId);
-                navigate('/active');
-            } else {
-                navigate('/');
-            }
-        }
-    }, [skillId, state.skills, startBlock, navigate]);
-
-    return null;
-}
+import { useGame } from './context/GameContext';
+import { Login } from './pages/Login';
 
 function AppContent() {
+    const { isAuthenticated } = useGame();
+
+    if (!isAuthenticated) {
+        return (
+            <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
+        );
+    }
+
     return (
         <>
             {/* Navigation is visible on all pages except active block and results */}
@@ -58,8 +52,8 @@ function AppContent() {
                 <Route path="/result-selection" element={<ResultSelection />} />
                 <Route path="/result" element={<BlockResult />} />
 
-                {/* Helper route to start a block */}
-                <Route path="/start/:skillId" element={<StartBlockRoute />} />
+                {/* New Start Block Selection Page */}
+                <Route path="/start/:skillId" element={<StartBlock />} />
 
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

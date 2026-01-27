@@ -4,7 +4,7 @@
 
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { PlayerState, Skill, BlockResult } from '../types';
-import { loadPlayerState, savePlayerState, generateId, shouldStartNewSeason, applySeasonReset } from '../lib/storage';
+import { loadPlayerState, savePlayerState, generateId, shouldStartNewSeason, applySeasonReset, createInitialState } from '../lib/storage';
 import { applyLpChange, createSkill } from '../lib/rankSystem';
 import { audio } from '../lib/audio';
 
@@ -15,11 +15,13 @@ type GameAction =
     | { type: 'LOAD_STATE'; payload: PlayerState }
     | { type: 'ADD_SKILL'; payload: { name: string; icon: string; color: string; initialRank?: string } }
     | { type: 'DELETE_SKILL'; payload: string }
-    | { type: 'START_BLOCK'; payload: { skillId: string } }
+    | { type: 'START_BLOCK'; payload: { skillId: string; durationMinutes: number } }
     | { type: 'END_BLOCK'; payload: { result: 'win' | 'loss' | 'abandon'; notes?: string } }
     | { type: 'CANCEL_BLOCK' }
     | { type: 'UPDATE_SETTINGS'; payload: Partial<PlayerState['settings']> }
-    | { type: 'CHECK_SEASON' };
+    | { type: 'CHECK_SEASON' }
+    | { type: 'LOGIN_SUCCESS'; payload: PlayerState }
+    | { type: 'LOGOUT' };
 
 function gameReducer(state: PlayerState, action: GameAction): PlayerState {
 
@@ -33,11 +35,18 @@ function gameReducer(state: PlayerState, action: GameAction): PlayerState {
         case 'ADD_SKILL': audio.playHover(); break;
         case 'DELETE_SKILL': audio.playClick(); break;
         case 'CANCEL_BLOCK': audio.playClick(); break;
+        case 'LOGIN_SUCCESS': audio.playWin(); break; // Nice sound on login
     }
 
     switch (action.type) {
         case 'LOAD_STATE':
             return action.payload;
+
+        case 'LOGIN_SUCCESS':
+            return action.payload;
+
+        case 'LOGOUT':
+            return createInitialState();
 
         case 'ADD_SKILL': {
             const newSkill = createSkill(
@@ -76,11 +85,17 @@ function gameReducer(state: PlayerState, action: GameAction): PlayerState {
             };
         }
 
-        case 'DELETE_SKILL':
+        case 'DELETE_SKILL': {
+            const isActiveSkill = state.activeSkillId === action.payload;
             return {
                 ...state,
                 skills: state.skills.filter(s => s.id !== action.payload),
+                activeBlockId: isActiveSkill ? null : state.activeBlockId,
+                activeSkillId: isActiveSkill ? null : state.activeSkillId,
+                activeBlockStartTime: isActiveSkill ? null : state.activeBlockStartTime,
+                activeBlockDuration: isActiveSkill ? null : state.activeBlockDuration,
             };
+        }
 
         case 'START_BLOCK': {
             const now = new Date().toISOString();
@@ -89,6 +104,7 @@ function gameReducer(state: PlayerState, action: GameAction): PlayerState {
                 activeBlockId: generateId('block'),
                 activeSkillId: action.payload.skillId,
                 activeBlockStartTime: now,
+                activeBlockDuration: action.payload.durationMinutes,
             };
         }
 
@@ -102,9 +118,15 @@ function gameReducer(state: PlayerState, action: GameAction): PlayerState {
 
             const now = new Date();
             const startTime = new Date(state.activeBlockStartTime);
-            const duration = Math.round((now.getTime() - startTime.getTime()) / (1000 * 60));
 
-            const { updatedSkill, event } = applyLpChange(skill, action.payload.result, duration);
+            // Calculate actual elapsed minutes for record
+            const elapsedMinutes = Math.round((now.getTime() - startTime.getTime()) / (1000 * 60));
+
+            // Use PLANNED duration for scoring calculation as per strictly enforced rules
+            // If activeBlockDuration is null (legacy), fallback to settings or elapsed
+            const targetDuration = state.activeBlockDuration || state.settings.blockDuration || elapsedMinutes;
+
+            const { updatedSkill, event } = applyLpChange(skill, action.payload.result, targetDuration);
 
             if (event.promotion) audio.playRankUp();
 
@@ -113,7 +135,7 @@ function gameReducer(state: PlayerState, action: GameAction): PlayerState {
                 skillId: skill.id,
                 startTime: state.activeBlockStartTime,
                 endTime: now.toISOString(),
-                duration,
+                duration: elapsedMinutes, // Record actual time spent
                 result: action.payload.result,
                 lpChange: event.amount + event.bonusAmount,
                 rankBefore: skill.rank,
@@ -133,6 +155,7 @@ function gameReducer(state: PlayerState, action: GameAction): PlayerState {
                 activeBlockId: null,
                 activeSkillId: null,
                 activeBlockStartTime: null,
+                activeBlockDuration: null,
             };
         }
 
@@ -142,6 +165,7 @@ function gameReducer(state: PlayerState, action: GameAction): PlayerState {
                 activeBlockId: null,
                 activeSkillId: null,
                 activeBlockStartTime: null,
+                activeBlockDuration: null,
             };
 
         case 'UPDATE_SETTINGS':
@@ -166,10 +190,13 @@ interface GameContextValue {
     dispatch: React.Dispatch<GameAction>;
     addSkill: (name: string, icon: string, color: string, initialRank?: string) => void;
     deleteSkill: (id: string) => void;
-    startBlock: (skillId: string) => void;
+    startBlock: (skillId: string, durationMinutes: number) => void;
     endBlock: (result: 'win' | 'loss' | 'abandon', notes?: string) => void;
     cancelBlock: () => void;
     getActiveSkill: () => Skill | undefined;
+    login: (token: string) => Promise<boolean>;
+    logout: () => void;
+    isAuthenticated: boolean;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -177,42 +204,23 @@ const GameContext = createContext<GameContextValue | null>(null);
 export function GameProvider({ children }: { children: ReactNode }) {
     const [state, dispatch] = useReducer(gameReducer, loadPlayerState());
 
-    // Init from Backend
+    // Init Logic (Simplified: Use local first, auth will overwrite)
     useEffect(() => {
-        async function init() {
-            const localState = loadPlayerState();
-            try {
-                const id = localState.id || generateId('player');
-                // Simple fetch attempt
-                const res = await fetch(`${API_URL}/player/${id}`);
-                if (res.ok) {
-                    const serverState = await res.json();
-                    if (serverState && serverState.id) {
-                        console.log('Using server state');
-                        dispatch({ type: 'LOAD_STATE', payload: serverState });
-                        return;
-                    }
-                }
-            } catch (e) {
-                console.warn('Backend unavailable, running in offline mode');
-            }
-            dispatch({ type: 'LOAD_STATE', payload: localState });
-            dispatch({ type: 'CHECK_SEASON' });
-        }
-        init();
+        dispatch({ type: 'CHECK_SEASON' });
     }, []);
 
     // Sync to Backend
     useEffect(() => {
-        savePlayerState(state); // Always save local
+        if (state.id) {
+            savePlayerState(state); // Always save local
 
-        // Sync remote
-        fetch(`${API_URL}/player/${state.id}/sync`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(state),
-        }).catch(e => console.warn('Sync failed', e));
-
+            // Sync remote only if we have an ID (we always do)
+            fetch(`${API_URL}/player/${state.id}/sync`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(state),
+            }).catch(e => console.warn('Sync failed', e));
+        }
     }, [state]);
 
     const addSkill = (name: string, icon: string, color: string, initialRank?: string) => {
@@ -223,8 +231,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         dispatch({ type: 'DELETE_SKILL', payload: id });
     };
 
-    const startBlock = (skillId: string) => {
-        dispatch({ type: 'START_BLOCK', payload: { skillId } });
+    const startBlock = (skillId: string, durationMinutes: number) => {
+        dispatch({ type: 'START_BLOCK', payload: { skillId, durationMinutes } });
     };
 
     const endBlock = (result: 'win' | 'loss' | 'abandon', notes?: string) => {
@@ -239,6 +247,32 @@ export function GameProvider({ children }: { children: ReactNode }) {
         return state.skills.find(s => s.id === state.activeSkillId);
     };
 
+    const login = async (token: string): Promise<boolean> => {
+        try {
+            const res = await fetch(`${API_URL}/auth/google`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token }),
+            });
+
+            if (res.ok) {
+                const playerState = await res.json();
+                dispatch({ type: 'LOGIN_SUCCESS', payload: playerState });
+                return true;
+            }
+            return false;
+        } catch (e) {
+            console.error('Login error', e);
+            return false;
+        }
+    };
+
+    const logout = () => {
+        dispatch({ type: 'LOGOUT' });
+        // Clear local storage manually if needed to force full reset
+        localStorage.removeItem('life_ranked_system_state');
+    };
+
     return (
         <GameContext.Provider
             value={{
@@ -250,6 +284,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
                 endBlock,
                 cancelBlock,
                 getActiveSkill,
+                login,
+                logout,
+                isAuthenticated: !!state.googleId // Check if authenticated via Google
             }}
         >
             {children}
