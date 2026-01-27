@@ -1,0 +1,54 @@
+/* LP Bar Styles */
+
+.lp-bar {
+    width: 100%;
+}
+
+.lp-bar__label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-xs);
+}
+
+.lp-bar__text {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.lp-bar__value {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+}
+
+.lp-bar__track {
+    position: relative;
+    height: 8px;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.lp-bar__fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: var(--gradient-red);
+    border-radius: 4px;
+}
+
+.lp-bar__glow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 70, 85, 0.5));
+    filter: blur(4px);
+    border-radius: 4px;
+}

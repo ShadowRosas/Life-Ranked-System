@@ -1,0 +1,82 @@
+/* LP Animation Styles */
+
+.lp-animation {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.lp-animation__main {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-xs);
+}
+
+.lp-animation__symbol,
+.lp-animation__value {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 5rem;
+    line-height: 1;
+}
+
+.lp-animation--win .lp-animation__symbol,
+.lp-animation--win .lp-animation__value {
+    color: var(--accent-green);
+    text-shadow: 0 0 40px var(--accent-green);
+}
+
+.lp-animation--loss .lp-animation__symbol,
+.lp-animation--loss .lp-animation__value,
+.lp-animation--abandon .lp-animation__symbol,
+.lp-animation--abandon .lp-animation__value {
+    color: var(--accent-red);
+    text-shadow: 0 0 40px var(--accent-red);
+}
+
+.lp-animation__label {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 2rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.lp-animation__bonus {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.25rem;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: rgba(255, 136, 0, 0.1);
+    border: 1px solid rgba(255, 136, 0, 0.3);
+    border-radius: var(--radius-md);
+    color: #ff8800;
+}
+
+.lp-animation__particles {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.lp-animation__particle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.lp-animation--win .lp-animation__particle {
+    background: var(--accent-green);
+    box-shadow: 0 0 10px var(--accent-green);
+}
+
+.lp-animation--loss .lp-animation__particle,
+.lp-animation--abandon .lp-animation__particle {
+    background: var(--accent-red);
+    box-shadow: 0 0 10px var(--accent-red);
+}

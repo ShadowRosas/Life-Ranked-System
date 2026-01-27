@@ -1,0 +1,102 @@
+/* Block Timer Styles */
+
+.block-timer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-xl);
+    padding: var(--spacing-2xl);
+}
+
+.block-timer__skill {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-xl);
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-subtle);
+}
+
+.block-timer__skill-icon {
+    font-size: 2rem;
+}
+
+.block-timer__skill-name {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.block-timer__display {
+    position: relative;
+    width: 280px;
+    height: 280px;
+}
+
+.block-timer__circle {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.block-timer__track {
+    stroke: var(--bg-tertiary);
+}
+
+.block-timer__progress {
+    stroke: var(--accent-red);
+    filter: drop-shadow(0 0 10px var(--accent-red));
+}
+
+.block-timer--urgent .block-timer__progress {
+    stroke: var(--accent-gold);
+    filter: drop-shadow(0 0 20px var(--accent-gold));
+    animation: pulse 1s infinite;
+}
+
+.block-timer__time {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 4rem;
+    letter-spacing: 0.05em;
+    color: var(--text-primary);
+}
+
+.block-timer--urgent .block-timer__time {
+    color: var(--accent-gold);
+    text-shadow: 0 0 20px var(--accent-gold);
+    animation: glow 1s infinite;
+}
+
+.block-timer__status {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--accent-red);
+    animation: pulse 2s infinite;
+}
+
+.block-timer__controls {
+    display: flex;
+    gap: var(--spacing-md);
+}
+
+.block-timer__warning {
+    padding: var(--spacing-md) var(--spacing-xl);
+    background: linear-gradient(135deg, rgba(255, 229, 92, 0.1) 0%, rgba(255, 136, 0, 0.1) 100%);
+    border: 1px solid rgba(255, 229, 92, 0.3);
+    border-radius: var(--radius-md);
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--accent-gold);
+    animation: pulse 0.5s infinite;
+}
