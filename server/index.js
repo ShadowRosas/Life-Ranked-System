@@ -23,45 +23,20 @@ app.use(cors());
 app.use(express.json());
 
 // MongoDB Connection
-// MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URL || process.env.MONGODB_URL || process.env.DATABASE_URL || process.env.MONGO_PRIVATE_URL || 'mongodb://127.0.0.1:27017/life-ranked';
+// CRITICAL: Replace '*****' with your actual password if using this fallback!
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://admin:nomasleinad123@mes-web.vhjg9k2.mongodb.net/Life-Ranked-System';
 
-console.log('🔍 Environment Keys:', Object.keys(process.env).sort().join(', '));
+console.log('🔌 Connecting to MongoDB...');
 
-if (MONGODB_URI.includes('127.0.0.1')) {
-    console.warn('⚠️  WARNING: No MongoDB environment variable found!');
-    console.warn('⚠️  App is defaulting to LOCALHOST. This WILL FAIL on Railway unless you attach a MongoDB service.');
-} else {
-    console.log('🔌 Connecting to provided MongoDB URI...');
-}
+// Simplified Connection (No options, modern Mongoose defaults)
+mongoose.connect(MONGODB_URI)
+    .then(() => console.log('✅ Connected to MongoDB'))
+    .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
-const startServer = async () => {
-    try {
-        await mongoose.connect(MONGODB_URI, {
-            serverSelectionTimeoutMS: 5000,
-            socketTimeoutMS: 45000,
-        });
-        console.log('✅ Connected to MongoDB');
-    } catch (err) {
-        console.error('❌ Failed to connect to MongoDB. Starting server in Offline Mode.', err);
-        // Continue starting server so frontend is served
-    }
-
-    app.listen(PORT, () => {
-        console.log(`🚀 Server running on port ${PORT}`);
-    });
-};
-
-startServer();
-
-// Connection Events
-mongoose.connection.on('error', err => console.error('🔴 MongoDB Runtime Error:', err));
-mongoose.connection.on('disconnected', () => console.warn('⚠️ MongoDB Disconnected'));
-mongoose.connection.on('reconnected', () => console.log('♻️ MongoDB Reconnected'));
-
-// API Routes
-
-// API Routes
+// Start Server
+app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+});
 // ... (Auth, Player, Sync routes remain above)
 
 // Serve Frontend Static Files (Production)
