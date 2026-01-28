@@ -23,7 +23,7 @@ app.use(cors());
 app.use(express.json());
 
 // MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/life-ranked';
+const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URL || process.env.MONGODB_URL || 'mongodb://127.0.0.1:27017/life-ranked';
 mongoose.connect(MONGODB_URI)
     .then(() => console.log('✅ Connected to MongoDB'))
     .catch(err => console.error('❌ MongoDB Connection Error:', err));
@@ -37,7 +37,7 @@ app.use(express.static(distPath));
 
 // Auth Endpoint (Google + Dev)
 app.post('/api/auth/google', async (req, res) => {
-    // ... logic remains ...
+    console.log('📬 Login request received');
     try {
         const { token } = req.body;
         let payload;
@@ -45,13 +45,13 @@ app.post('/api/auth/google', async (req, res) => {
         // Handle Dev Token (fake)
         if (token.startsWith('fake.')) {
             const parts = token.split('.');
-            const decoded = JSON.parse(atob(parts[1]));
+            const decoded = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf-8'));
             payload = {
                 sub: decoded.sub || 'dev_user',
                 email: decoded.email || 'dev@example.com',
                 name: decoded.name || 'Developer'
             };
-            console.log('🔓 Dev Login:', payload.email);
+            console.log('🔓 Dev Login Attempt:', payload.email);
         } else {
             // Handle Real Google Token
             const ticket = await client.verifyIdToken({

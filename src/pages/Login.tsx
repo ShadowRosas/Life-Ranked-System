@@ -82,7 +82,7 @@ export function Login() {
                             if (success) {
                                 navigate('/');
                             } else {
-                                alert('Dev Login Failed. Is the backend server running on port 5000?');
+                                alert('Login failed. Please check the backend logs or database connection.');
                             }
                         });
                     }}>
