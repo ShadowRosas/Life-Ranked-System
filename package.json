@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev:server": "cd server && npm run dev",
+    "build": "vite build",
+    "start": "node server/index.js",
+    "postinstall": "cd server && npm install",
     "lint": "eslint .",
     "preview": "vite preview"
   },

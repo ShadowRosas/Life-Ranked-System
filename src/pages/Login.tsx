@@ -79,7 +79,11 @@ export function Login() {
                         const fakeToken = `fake.${btoa(payload)}.signature`;
 
                         login(fakeToken).then(success => {
-                            if (success) navigate('/');
+                            if (success) {
+                                navigate('/');
+                            } else {
+                                alert('Dev Login Failed. Is the backend server running on port 5000?');
+                            }
                         });
                     }}>
                         <input

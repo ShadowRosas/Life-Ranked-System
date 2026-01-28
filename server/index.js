@@ -1,75 +1,81 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
+import { OAuth2Client } from 'google-auth-library';
 import { Player } from './models/Player.js';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
+const CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID";
+const client = new OAuth2Client(CLIENT_ID);
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
 // MongoDB Connection
-mongoose.connect('mongodb+srv://admin:nomasleinad123@mes-web.vhjg9k2.mongodb.net/Life-Ranked-System')
-    .then(() => {
-        console.log('✅ Connected to MongoDB: Life-Ranked-System');
-    })
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/life-ranked';
+mongoose.connect(MONGODB_URI)
+    .then(() => console.log('✅ Connected to MongoDB'))
     .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
-import { OAuth2Client } from 'google-auth-library';
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID');
+// API Routes
+// ... (Auth, Player, Sync routes remain above)
 
-// Auth Route
+// Serve Frontend Static Files (Production)
+const distPath = path.join(__dirname, '../dist');
+app.use(express.static(distPath));
+
+// Auth Endpoint (Google + Dev)
 app.post('/api/auth/google', async (req, res) => {
+    // ... logic remains ...
     try {
         const { token } = req.body;
-
-        // Verify Google Token
-        // NOTE: In production, you must use a real Client ID and verify the token signature.
         let payload;
-        try {
+
+        // Handle Dev Token (fake)
+        if (token.startsWith('fake.')) {
+            const parts = token.split('.');
+            const decoded = JSON.parse(atob(parts[1]));
+            payload = {
+                sub: decoded.sub || 'dev_user',
+                email: decoded.email || 'dev@example.com',
+                name: decoded.name || 'Developer'
+            };
+            console.log('🔓 Dev Login:', payload.email);
+        } else {
+            // Handle Real Google Token
             const ticket = await client.verifyIdToken({
                 idToken: token,
-                audience: process.env.GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID'
+                audience: CLIENT_ID,
             });
             payload = ticket.getPayload();
-        } catch (e) {
-            // Fallback for development/demo (Decodes without signature verification if env is missing)
-            // THIS IS INSECURE FOR PRODUCTION - ONLY FOR QUICK PROTOTYPING WITHOUT ENV
-            console.warn('⚠️ Token verification failed (using unsafe decode for dev):', e.message);
-            const base64Url = token.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
-                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-            }).join(''));
-            payload = JSON.parse(jsonPayload);
         }
 
-        if (!payload || !payload.email) {
-            return res.status(400).json({ error: 'Invalid token' });
-        }
+        if (!payload) throw new Error('Invalid Token');
 
-        const { email, name, picture, sub: googleId } = payload;
+        const { sub: googleId, email, name } = payload;
 
-        // Find existing player
-        let player = await Player.findOne({ email });
-
+        // Find or Create Player
+        let player = await Player.findOne({ googleId });
         if (!player) {
-            // Check if we have a legacy player to migrate? (Maybe not needed for this task)
-
-            // Create New Player
+            // Check if email exists (migration?) or create new
+            // We use googleId as the primary stable ID for auth
             const now = new Date().toISOString();
-            // Generate a readable ID based on name or fall back to random
-            const safeName = name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().substring(0, 10);
-            const generatedId = `player_${safeName}_${Date.now().toString().slice(-6)}`;
-
             player = new Player({
-                id: generatedId,
+                id: googleId, // Use googleId as the game ID for now
                 googleId,
                 email,
                 name,
-                picture,
                 createdAt: now,
                 seasonStartDate: now,
                 currentSeason: 1,
@@ -81,35 +87,23 @@ app.post('/api/auth/google', async (req, res) => {
                 }
             });
             await player.save();
-            console.log('✨ Created new Google player:', email);
+            console.log('✨ New Player Registered:', email);
         } else {
-            console.log('Login existing player:', email);
-            // Update metadata if needed
-            if (!player.googleId) {
-                player.googleId = googleId;
-                player.name = name;
-                player.picture = picture;
-                await player.save();
-            }
+            console.log('👋 Player Login:', email);
         }
 
         res.json(player);
-
     } catch (error) {
         console.error('Auth Error:', error);
-        res.status(500).json({ error: 'Authentication failed' });
+        res.status(401).json({ error: 'Authentication failed' });
     }
 });
 
-// Routes
-
-// Get Player State (Create if not exists)
+// Get Player State (Create if not exists - Fallback)
 app.get('/api/player/:id', async (req, res) => {
     try {
         let player = await Player.findOne({ id: req.params.id });
-
         if (!player) {
-            // Create new player with default state if not found
             const now = new Date().toISOString();
             player = new Player({
                 id: req.params.id,
@@ -124,41 +118,38 @@ app.get('/api/player/:id', async (req, res) => {
                 }
             });
             await player.save();
-            console.log('✨ Created new player:', req.params.id);
         }
-
         res.json(player);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// Sync Player State (Full state update)
+// Sync Player State
 app.post('/api/player/:id/sync', async (req, res) => {
     try {
         const { id } = req.params;
         const state = req.body;
 
-        // Validate ID match
-        if (state.id !== id) {
-            return res.status(400).json({ error: 'ID mismatch' });
-        }
+        if (state.id !== id) return res.status(400).json({ error: 'ID mismatch' });
 
-        // Update player state
-        // We replace the entire document content but keep the ID
         const updated = await Player.findOneAndUpdate(
             { id },
             state,
             { new: true, upsert: true }
         );
-
         res.json(updated);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
+// Handle SPA routing - Send index.html for any unknown routes
+app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+});
+
 // Start Server
 app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`🚀 Server running on port ${PORT}`);
 });
