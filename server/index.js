@@ -27,7 +27,13 @@ app.use(express.json());
 const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URL || process.env.MONGODB_URL || process.env.DATABASE_URL || process.env.MONGO_PRIVATE_URL || 'mongodb://127.0.0.1:27017/life-ranked';
 
 console.log('🔍 Environment Keys:', Object.keys(process.env).sort().join(', '));
-console.log('🔌 Attempting to connect to MongoDB...', MONGODB_URI.startsWith('mongodb') ? '(URI Found)' : '(Invalid URI)');
+
+if (MONGODB_URI.includes('127.0.0.1')) {
+    console.warn('⚠️  WARNING: No MongoDB environment variable found!');
+    console.warn('⚠️  App is defaulting to LOCALHOST. This WILL FAIL on Railway unless you attach a MongoDB service.');
+} else {
+    console.log('🔌 Connecting to provided MongoDB URI...');
+}
 
 const startServer = async () => {
     try {
@@ -36,16 +42,14 @@ const startServer = async () => {
             socketTimeoutMS: 45000,
         });
         console.log('✅ Connected to MongoDB');
-
-        app.listen(PORT, () => {
-            console.log(`🚀 Server running on port ${PORT}`);
-        });
-
     } catch (err) {
-        console.error('❌ Failed to connect to MongoDB:', err);
-        // Retry logic or exit? Railway restarts on exit.
-        process.exit(1);
+        console.error('❌ Failed to connect to MongoDB. Starting server in Offline Mode.', err);
+        // Continue starting server so frontend is served
     }
+
+    app.listen(PORT, () => {
+        console.log(`🚀 Server running on port ${PORT}`);
+    });
 };
 
 startServer();
