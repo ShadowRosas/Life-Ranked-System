@@ -24,25 +24,38 @@ app.use(express.json());
 
 // MongoDB Connection
 // MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URL || process.env.MONGODB_URL || 'mongodb://127.0.0.1:27017/life-ranked';
+const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URL || process.env.MONGODB_URL || process.env.DATABASE_URL || process.env.MONGO_PRIVATE_URL || 'mongodb://127.0.0.1:27017/life-ranked';
 
-console.log('🔌 Attempting to connect to MongoDB...', MONGODB_URI.includes('@') ? ' (URI with auth)' : ' (Local/No-Auth URI)');
+console.log('🔍 Environment Keys:', Object.keys(process.env).sort().join(', '));
+console.log('🔌 Attempting to connect to MongoDB...', MONGODB_URI.startsWith('mongodb') ? '(URI Found)' : '(Invalid URI)');
 
-// Connect with timeout options
-mongoose.connect(MONGODB_URI, {
-    serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of hanging
-    socketTimeoutMS: 45000,
-})
-    .then(() => console.log('✅ Connected to MongoDB'))
-    .catch(err => {
-        console.error('❌ MongoDB Initial Connection Error:', err);
-        // Do not exit process, let it try to handle requests (will fail but valid for debugging)
-    });
+const startServer = async () => {
+    try {
+        await mongoose.connect(MONGODB_URI, {
+            serverSelectionTimeoutMS: 5000,
+            socketTimeoutMS: 45000,
+        });
+        console.log('✅ Connected to MongoDB');
+
+        app.listen(PORT, () => {
+            console.log(`🚀 Server running on port ${PORT}`);
+        });
+
+    } catch (err) {
+        console.error('❌ Failed to connect to MongoDB:', err);
+        // Retry logic or exit? Railway restarts on exit.
+        process.exit(1);
+    }
+};
+
+startServer();
 
 // Connection Events
 mongoose.connection.on('error', err => console.error('🔴 MongoDB Runtime Error:', err));
 mongoose.connection.on('disconnected', () => console.warn('⚠️ MongoDB Disconnected'));
 mongoose.connection.on('reconnected', () => console.log('♻️ MongoDB Reconnected'));
+
+// API Routes
 
 // API Routes
 // ... (Auth, Player, Sync routes remain above)
@@ -171,7 +184,4 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(distPath, 'index.html'));
 });
 
-// Start Server
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-});
+// Server started via startServer();
