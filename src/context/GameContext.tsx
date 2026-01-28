@@ -8,9 +8,7 @@ import { loadPlayerState, savePlayerState, generateId, shouldStartNewSeason, app
 import { applyLpChange, createSkill } from '../lib/rankSystem';
 import { audio } from '../lib/audio';
 
-const API_URL = window.location.origin.includes('localhost')
-    ? 'http://localhost:5000/api'
-    : '/api';
+const API_URL = '/api';
 
 // Action types
 type GameAction =
