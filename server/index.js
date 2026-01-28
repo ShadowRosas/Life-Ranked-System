@@ -23,10 +23,26 @@ app.use(cors());
 app.use(express.json());
 
 // MongoDB Connection
+// MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URL || process.env.MONGODB_URL || 'mongodb://127.0.0.1:27017/life-ranked';
-mongoose.connect(MONGODB_URI)
+
+console.log('🔌 Attempting to connect to MongoDB...', MONGODB_URI.includes('@') ? ' (URI with auth)' : ' (Local/No-Auth URI)');
+
+// Connect with timeout options
+mongoose.connect(MONGODB_URI, {
+    serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of hanging
+    socketTimeoutMS: 45000,
+})
     .then(() => console.log('✅ Connected to MongoDB'))
-    .catch(err => console.error('❌ MongoDB Connection Error:', err));
+    .catch(err => {
+        console.error('❌ MongoDB Initial Connection Error:', err);
+        // Do not exit process, let it try to handle requests (will fail but valid for debugging)
+    });
+
+// Connection Events
+mongoose.connection.on('error', err => console.error('🔴 MongoDB Runtime Error:', err));
+mongoose.connection.on('disconnected', () => console.warn('⚠️ MongoDB Disconnected'));
+mongoose.connection.on('reconnected', () => console.log('♻️ MongoDB Reconnected'));
 
 // API Routes
 // ... (Auth, Player, Sync routes remain above)
@@ -38,6 +54,12 @@ app.use(express.static(distPath));
 // Auth Endpoint (Google + Dev)
 app.post('/api/auth/google', async (req, res) => {
     console.log('📬 Login request received');
+    // Check DB Connection State
+    if (mongoose.connection.readyState !== 1) {
+        console.error('⛔ request failed: DB not connected. State:', mongoose.connection.readyState);
+        return res.status(503).json({ error: 'Database connection not ready' });
+    }
+
     try {
         const { token } = req.body;
         let payload;
