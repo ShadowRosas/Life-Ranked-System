@@ -84,6 +84,14 @@ class AudioSystem {
         this.playTone(880, 'square', 1.5, 0.2, 0.3);
         this.playTone(220, 'sawtooth', 2.0, 0.3, 0);
     }
+
+    playTimerComplete() {
+        // Notification sound for timer finish
+        const now = 0;
+        this.playTone(600, 'sine', 0.1, 0.1, now);
+        this.playTone(800, 'sine', 0.1, 0.1, now + 0.1);
+        this.playTone(1000, 'sine', 0.3, 0.1, now + 0.2);
+    }
 }
 
 export const audio = new AudioSystem();

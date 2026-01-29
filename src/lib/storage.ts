@@ -22,6 +22,7 @@ export function createInitialState(): PlayerState {
         currentSeason: 1,
         seasonStartDate: now,
         skills: [],
+        areas: ['Programación', 'Salud', 'Estudio', 'Arte', 'Trabajo', 'Otros'],
         settings: DEFAULT_SETTINGS,
         activeBlockId: null,
         activeSkillId: null,
@@ -36,6 +37,10 @@ export function loadPlayerState(): PlayerState {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
             const state = JSON.parse(stored) as PlayerState;
+            // Migration: Ensure areas exist for legacy states
+            if (!state.areas) {
+                state.areas = ['Programación', 'Salud', 'Estudio', 'Arte', 'Trabajo', 'Otros'];
+            }
             return state;
         }
     } catch (error) {

@@ -5,11 +5,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Play, Target, Flame, Trophy } from 'lucide-react';
+import { Play, Target, Flame, Trophy, Layers, Grid } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { useLanguage } from '../context/LanguageContext';
 import { SkillCard } from '../components/SkillCard';
-import { formatHours } from '../lib/rankSystem';
+import { formatHours, getAreaRankInfo } from '../lib/rankSystem';
+import { Skill } from '../types';
 import './Dashboard.css';
 
 export function Dashboard() {
@@ -17,12 +18,52 @@ export function Dashboard() {
     const { t } = useLanguage();
     const navigate = useNavigate();
 
+    const [isGrouped, setIsGrouped] = React.useState(false);
+
     // Calculate total stats
     const totalHours = state.skills.reduce((sum, s) => sum + s.totalMinutes, 0);
     const totalWins = state.skills.reduce((sum, s) => sum + s.wins, 0);
     const bestStreak = Math.max(...state.skills.map(s => s.bestStreak), 0);
 
     const activeSkill = state.skills.find(s => s.id === state.activeSkillId);
+
+    // Grouping Logic
+    const groupedSkills = React.useMemo(() => {
+        if (!isGrouped) return null;
+
+        const groups: Record<string, Skill[]> = {};
+
+        state.skills.forEach(skill => {
+            const area = skill.area || 'Sin Área';
+            if (!groups[area]) groups[area] = [];
+            groups[area].push(skill);
+        });
+
+        // Convert to array and sort by total hours
+        return Object.entries(groups)
+            .map(([area, skills]) => {
+                const areaMinutes = skills.reduce((sum, s) => sum + s.totalMinutes, 0);
+                const areaPlacementMinutes = skills.reduce((sum, s) => sum + (s.placementMinutes || 0), 0);
+                const areaWins = skills.reduce((sum, s) => sum + s.wins, 0);
+                const areaLosses = skills.reduce((sum, s) => sum + s.losses, 0);
+                const areaAbandons = skills.reduce((sum, s) => sum + s.abandons, 0);
+                const totalGames = areaWins + areaLosses + areaAbandons;
+                const winRate = totalGames > 0 ? Math.round((areaWins / totalGames) * 100) : 0;
+
+                const rankInfo = getAreaRankInfo(areaMinutes, areaWins, areaLosses, areaAbandons, areaPlacementMinutes);
+
+                return {
+                    name: area,
+                    skills,
+                    totalMinutes: areaMinutes,
+                    placementMinutes: areaPlacementMinutes,
+                    winRate,
+                    totalGames,
+                    rankInfo
+                };
+            })
+            .sort((a, b) => b.totalMinutes - a.totalMinutes);
+    }, [state.skills, isGrouped]);
 
     // Redirect to active block if one is in progress
     React.useEffect(() => {
@@ -117,13 +158,22 @@ export function Dashboard() {
                 <div className="dashboard__section">
                     <div className="dashboard__section-header">
                         <h2>{t('dash_skills_title')}</h2>
-                        <button
-                            className="btn btn-secondary"
-                            onClick={() => navigate('/skills')}
-                        >
-                            <Play size={18} />
-                            {t('dash_manage_skills')}
-                        </button>
+                        <div className="dashboard__actions">
+                            <button
+                                className={`btn btn-icon ${isGrouped ? 'btn-active' : 'btn-secondary'}`}
+                                onClick={() => setIsGrouped(!isGrouped)}
+                                title={isGrouped ? "Show All Skills" : "Group by Area"}
+                            >
+                                {isGrouped ? <Grid size={18} /> : <Layers size={18} />}
+                            </button>
+                            <button
+                                className="btn btn-secondary"
+                                onClick={() => navigate('/skills')}
+                            >
+                                <Play size={18} />
+                                {t('dash_manage_skills')}
+                            </button>
+                        </div>
                     </div>
 
                     {state.skills.length === 0 ? (
@@ -149,17 +199,85 @@ export function Dashboard() {
                             initial="hidden"
                             animate="show"
                         >
-                            {state.skills.map((skill) => (
+                            {isGrouped && groupedSkills ? (
                                 <motion.div
-                                    key={skill.id}
-                                    variants={itemVariants}
+                                    className="dashboard__areas"
+                                    variants={containerVariants}
+                                    initial="hidden"
+                                    animate="show"
                                 >
-                                    <SkillCard
-                                        skill={skill}
-                                        onClick={() => navigate(`/start/${skill.id}`)}
-                                    />
+                                    {groupedSkills.map((area) => (
+                                        <motion.div
+                                            key={area.name}
+                                            className="area-card"
+                                            variants={itemVariants}
+                                        >
+                                            <div className="area-card__header">
+                                                <div className="area-card__title-group">
+                                                    <h3>{area.name}</h3>
+                                                    <div
+                                                        className="area-card__rank-badge"
+                                                        style={{
+                                                            '--rank-color': area.rankInfo.rankConfig.color,
+                                                            '--rank-glow': area.rankInfo.rankConfig.glowColor
+                                                        } as React.CSSProperties}
+                                                    >
+                                                        {area.rankInfo.radiantTitle}
+                                                    </div>
+                                                </div>
+                                                <span className="area-card__hours">{formatHours(area.totalMinutes)}</span>
+                                            </div>
+
+                                            <div className="area-card__stats">
+                                                <div className="stat">
+                                                    <span className="label">Skills</span>
+                                                    <span className="value">{area.skills.length}</span>
+                                                </div>
+                                                <div className="stat">
+                                                    <span className="label">Games</span>
+                                                    <span className="value">{area.totalGames}</span>
+                                                </div>
+                                                <div className="stat">
+                                                    <span className="label">Win Rate</span>
+                                                    <span className={`value ${area.winRate >= 50 ? 'positive' : 'negative'}`}>
+                                                        {area.winRate}%
+                                                    </span>
+                                                </div>
+                                                <div className="stat">
+                                                    <span className="label">Area MMR</span>
+                                                    <span className="value">{Math.round(area.rankInfo.mmr)}</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="area-card__skills">
+                                                {area.skills.map(skill => (
+                                                    <div
+                                                        key={skill.id}
+                                                        className="mini-skill-icon"
+                                                        title={`${skill.name} (${formatHours(skill.totalMinutes)})`}
+                                                        style={{ '--skill-color': skill.color } as React.CSSProperties}
+                                                        onClick={() => navigate(`/start/${skill.id}`)}
+                                                    >
+                                                        {skill.icon}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </motion.div>
+                                    ))}
                                 </motion.div>
-                            ))}
+                            ) : (
+                                state.skills.map((skill) => (
+                                    <motion.div
+                                        key={skill.id}
+                                        variants={itemVariants}
+                                    >
+                                        <SkillCard
+                                            skill={skill}
+                                            onClick={() => navigate(`/start/${skill.id}`)}
+                                        />
+                                    </motion.div>
+                                ))
+                            )}
                         </motion.div>
                     )}
                 </div>

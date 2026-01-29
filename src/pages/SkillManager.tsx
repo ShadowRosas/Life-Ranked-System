@@ -10,34 +10,45 @@ import { SkillTemplate } from '../types';
 import { RANK_CONFIGS } from '../lib/rankSystem';
 import './SkillManager.css';
 
+// SKILL_AREAS removed - now uses state.areas
+
 const PREDEFINED_TEMPLATES: SkillTemplate[] = [
-    { name: 'Coding', icon: '💻', color: '#3b82f6' },
-    { name: 'Fitness', icon: '💪', color: '#ef4444' },
-    { name: 'Reading', icon: '📚', color: '#eab308' },
-    { name: 'Writing', icon: '✍️', color: '#a855f7' },
-    { name: 'Language', icon: '🗣️', color: '#22c55e' },
-    { name: 'Music', icon: '🎸', color: '#f97316' },
+    { name: 'Coding', icon: '💻', color: '#3b82f6', area: 'Programación' },
+    { name: 'Fitness', icon: '💪', color: '#ef4444', area: 'Salud' },
+    { name: 'Reading', icon: '📚', color: '#eab308', area: 'Estudio' },
+    { name: 'Writing', icon: '✍️', color: '#a855f7', area: 'Arte' },
+    { name: 'Language', icon: '🗣️', color: '#22c55e', area: 'Estudio' },
+    { name: 'Music', icon: '🎸', color: '#f97316', area: 'Arte' },
 ];
 
 export function SkillManager() {
-    const { state, addSkill, deleteSkill } = useGame();
+    const { state, addSkill, deleteSkill, addArea, deleteArea } = useGame();
     const navigate = useNavigate();
 
     const [customName, setCustomName] = useState('');
     const [customIcon, setCustomIcon] = useState('⚡');
     const [customColor, setCustomColor] = useState('#ff4655');
+    const [customArea, setCustomArea] = useState(state.areas?.[0] || 'Otros');
+    const [newAreaName, setNewAreaName] = useState('');
     const [initialRank, setInitialRank] = useState('iron');
 
     const handleAddTemplate = (template: SkillTemplate) => {
-        addSkill(template.name, template.icon, template.color, initialRank);
+        addSkill(template.name, template.icon, template.color, initialRank, template.area);
         navigate('/');
     };
 
     const handleAddCustom = (e: React.FormEvent) => {
         e.preventDefault();
         if (!customName.trim()) return;
-        addSkill(customName, customIcon, customColor, initialRank);
+        addSkill(customName, customIcon, customColor, initialRank, customArea);
         navigate('/');
+    };
+
+    const handleAddArea = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newAreaName.trim()) return;
+        addArea(newAreaName.trim());
+        setNewAreaName('');
     };
 
     const handleDelete = (id: string, name: string) => {
@@ -93,6 +104,18 @@ export function SkillManager() {
                         <div className="custom-skill-form">
                             <h3>Custom Skill</h3>
                             <form onSubmit={handleAddCustom}>
+                                <div className="form-group mb-sm">
+                                    <label>Area (Category)</label>
+                                    <select
+                                        value={customArea}
+                                        onChange={(e) => setCustomArea(e.target.value)}
+                                        className="rank-selector" // reuse style
+                                    >
+                                        {(state.areas || []).map(area => (
+                                            <option key={area} value={area}>{area}</option>
+                                        ))}
+                                    </select>
+                                </div>
                                 <div className="form-group">
                                     <label>Skill Name</label>
                                     <input
@@ -136,7 +159,40 @@ export function SkillManager() {
                     </div>
 
                     <div className="skill-manager__section">
-                        <h2>ACTIVE SKILLS</h2>
+                        <h2>MANAGE AREAS</h2>
+                        <div className="custom-skill-form mb-lg">
+                            <form onSubmit={handleAddArea} className="form-row">
+                                <input
+                                    type="text"
+                                    value={newAreaName}
+                                    onChange={(e) => setNewAreaName(e.target.value)}
+                                    placeholder="New Area Name"
+                                    className="flex-1"
+                                />
+                                <button type="submit" className="btn btn-primary" disabled={!newAreaName.trim()}>
+                                    <Plus size={18} />
+                                </button>
+                            </form>
+                        </div>
+
+                        <div className="active-skills-list">
+                            {(state.areas || []).map(area => (
+                                <div key={area} className="manage-skill-item">
+                                    <div className="manage-skill-item__info">
+                                        <span className="manage-skill-item__name">{area}</span>
+                                    </div>
+                                    <button
+                                        className="btn btn-secondary btn-icon btn-danger-hover"
+                                        onClick={() => deleteArea(area)}
+                                        disabled={(state.areas || []).length <= 1} // Keep at least one area
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+
+                        <h2 className="mt-xl">ACTIVE SKILLS</h2>
                         {state.skills.length === 0 ? (
                             <p className="text-muted">No active skills.</p>
                         ) : (

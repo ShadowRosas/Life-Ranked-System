@@ -5,6 +5,7 @@ export const translations = {
     en: {
         // Navigation
         nav_dashboard: 'Dashboard',
+        nav_stats: 'Statistics',
         nav_history: 'History',
         nav_profile: 'Profile',
         nav_skills: 'Skills',
@@ -39,6 +40,7 @@ export const translations = {
     es: {
         // Navigation
         nav_dashboard: 'Panel',
+        nav_stats: 'Estadísticas',
         nav_history: 'Historial',
         nav_profile: 'Perfil',
         nav_skills: 'Habilidades',

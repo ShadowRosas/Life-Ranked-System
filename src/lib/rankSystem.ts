@@ -7,28 +7,51 @@ import { Rank, RankConfig, RadiantLevel, Skill, LpChangeEvent } from '../types';
 // Rank configurations ordered from lowest to highest
 export const RANK_CONFIGS: RankConfig[] = [
     { rank: 'iron', name: 'Iron', nameEs: 'Hierro', minHours: 0, divisions: 3, lpPerDivision: 100, color: '#5a5a5a', glowColor: '#7a7a7a' },
-    { rank: 'bronze', name: 'Bronze', nameEs: 'Bronce', minHours: 20, divisions: 3, lpPerDivision: 100, color: '#cd7f32', glowColor: '#da9655' },
-    { rank: 'silver', name: 'Silver', nameEs: 'Plata', minHours: 60, divisions: 3, lpPerDivision: 100, color: '#c0c0c0', glowColor: '#e8e8e8' },
-    { rank: 'gold', name: 'Gold', nameEs: 'Oro', minHours: 120, divisions: 3, lpPerDivision: 100, color: '#ffd700', glowColor: '#ffe55c' },
-    { rank: 'platinum', name: 'Platinum', nameEs: 'Platino', minHours: 200, divisions: 3, lpPerDivision: 100, color: '#00cec9', glowColor: '#55efc4' },
-    { rank: 'diamond', name: 'Diamond', nameEs: 'Diamante', minHours: 280, divisions: 3, lpPerDivision: 100, color: '#a855f7', glowColor: '#c084fc' },
-    { rank: 'immortal1', name: 'Immortal 1', nameEs: 'Inmortal 1', minHours: 350, divisions: 1, lpPerDivision: 100, color: '#ef4444', glowColor: '#f87171' },
-    { rank: 'immortal2', name: 'Immortal 2', nameEs: 'Inmortal 2', minHours: 380, divisions: 1, lpPerDivision: 100, color: '#dc2626', glowColor: '#ef4444' },
-    { rank: 'immortal3', name: 'Immortal 3', nameEs: 'Inmortal 3', minHours: 400, divisions: 1, lpPerDivision: 100, color: '#b91c1c', glowColor: '#dc2626' },
-    { rank: 'radiant', name: 'Radiant', nameEs: 'Radiante', minHours: 450, divisions: 1, lpPerDivision: 200, color: '#ffe55c', glowColor: '#fff9c4' },
+    { rank: 'bronze', name: 'Bronze', nameEs: 'Bronce', minHours: 5, divisions: 3, lpPerDivision: 100, color: '#cd7f32', glowColor: '#da9655' },
+    { rank: 'silver', name: 'Silver', nameEs: 'Plata', minHours: 15, divisions: 3, lpPerDivision: 100, color: '#c0c0c0', glowColor: '#e8e8e8' },
+    { rank: 'gold', name: 'Gold', nameEs: 'Oro', minHours: 35, divisions: 3, lpPerDivision: 100, color: '#ffd700', glowColor: '#ffe55c' },
+    { rank: 'platinum', name: 'Platinum', nameEs: 'Platino', minHours: 60, divisions: 3, lpPerDivision: 100, color: '#00cec9', glowColor: '#55efc4' },
+    { rank: 'diamond', name: 'Diamond', nameEs: 'Diamante', minHours: 90, divisions: 3, lpPerDivision: 100, color: '#a855f7', glowColor: '#c084fc' },
+    { rank: 'immortal1', name: 'Immortal 1', nameEs: 'Inmortal 1', minHours: 120, divisions: 1, lpPerDivision: 100, color: '#ef4444', glowColor: '#f87171' },
+    { rank: 'immortal2', name: 'Immortal 2', nameEs: 'Inmortal 2', minHours: 135, divisions: 1, lpPerDivision: 100, color: '#dc2626', glowColor: '#ef4444' },
+    { rank: 'immortal3', name: 'Immortal 3', nameEs: 'Inmortal 3', minHours: 150, divisions: 1, lpPerDivision: 100, color: '#b91c1c', glowColor: '#dc2626' },
+    { rank: 'radiant', name: 'Radiant', nameEs: 'Radiante', minHours: 170, divisions: 1, lpPerDivision: 200, color: '#ffe55c', glowColor: '#fff9c4' },
 ];
 
 // Radiant internal thresholds (exponential scaling)
 export const RADIANT_THRESHOLDS: { level: RadiantLevel; minLp: number; name: string; hours: number }[] = [
-    { level: 'low', minLp: 0, name: 'Radiante Bajo', hours: 550 },
-    { level: 'mid', minLp: 200, name: 'Radiante Medio', hours: 650 },
-    { level: 'high', minLp: 500, name: 'Radiante Alto', hours: 800 },
-    { level: 'elite', minLp: 1000, name: 'Radiante Élite', hours: 900 },
-    { level: 'peak', minLp: 2000, name: 'Radiante #1', hours: 1000 },
+    { level: 'low', minLp: 0, name: 'Radiante Bajo', hours: 170 },
+    { level: 'mid', minLp: 200, name: 'Radiante Medio', hours: 190 },
+    { level: 'high', minLp: 500, name: 'Radiante Alto', hours: 210 },
+    { level: 'elite', minLp: 1000, name: 'Radiante Élite', hours: 230 },
+    { level: 'peak', minLp: 2000, name: 'Radiante #1', hours: 260 },
+];
+
+// AREA RANK CONFIGURATIONS (High level progression)
+// Radiant target: ~500h. Radiant Elite target: ~950h.
+export const AREA_RANK_CONFIGS: RankConfig[] = [
+    { rank: 'iron', name: 'Iron', nameEs: 'Hierro', minHours: 0, divisions: 1, lpPerDivision: 100, color: '#5a5a5a', glowColor: '#7a7a7a' },
+    { rank: 'bronze', name: 'Bronze', nameEs: 'Bronce', minHours: 20, divisions: 1, lpPerDivision: 100, color: '#cd7f32', glowColor: '#da9655' },
+    { rank: 'silver', name: 'Silver', nameEs: 'Plata', minHours: 70, divisions: 1, lpPerDivision: 100, color: '#c0c0c0', glowColor: '#e8e8e8' },
+    { rank: 'gold', name: 'Gold', nameEs: 'Oro', minHours: 150, divisions: 1, lpPerDivision: 100, color: '#ffd700', glowColor: '#ffe55c' },
+    { rank: 'platinum', name: 'Platinum', nameEs: 'Platino', minHours: 250, divisions: 1, lpPerDivision: 100, color: '#00cec9', glowColor: '#55efc4' },
+    { rank: 'diamond', name: 'Diamond', nameEs: 'Diamante', minHours: 350, divisions: 1, lpPerDivision: 100, color: '#a855f7', glowColor: '#c084fc' },
+    { rank: 'immortal1', name: 'Immortal 1', nameEs: 'Inmortal 1', minHours: 450, divisions: 1, lpPerDivision: 100, color: '#ef4444', glowColor: '#f87171' },
+    { rank: 'immortal2', name: 'Immortal 2', nameEs: 'Inmortal 2', minHours: 475, divisions: 1, lpPerDivision: 100, color: '#dc2626', glowColor: '#ef4444' },
+    { rank: 'immortal3', name: 'Immortal 3', nameEs: 'Inmortal 3', minHours: 500, divisions: 1, lpPerDivision: 100, color: '#b91c1c', glowColor: '#dc2626' },
+    { rank: 'radiant', name: 'Radiant', nameEs: 'Radiante', minHours: 550, divisions: 1, lpPerDivision: 200, color: '#ffe55c', glowColor: '#fff9c4' },
+];
+
+export const AREA_RADIANT_THRESHOLDS = [
+    { level: 'low', minHours: 550, name: 'Radiante Bajo' },
+    { level: 'mid', minHours: 650, name: 'Radiante Medio' },
+    { level: 'high', minHours: 800, name: 'Radiante Alto' },
+    { level: 'elite', minHours: 950, name: 'Radiante Élite' },
+    { level: 'peak', minHours: 1200, name: 'Radiante #1' },
 ];
 
 // LP constants
-export const LP_WIN = 20;
+export const LP_WIN = 25;
 export const LP_LOSS = -20;
 export const LP_ABANDON = -30;
 
@@ -41,6 +64,20 @@ export function getRankConfig(rank: Rank): RankConfig {
 export function getRankIndex(rank: Rank): number {
     return RANK_CONFIGS.findIndex(r => r.rank === rank);
 }
+
+// Mapping of initial ranks to theoretical base hours
+export const PLACEMENT_HOURS_MAP: Record<Rank, number> = {
+    iron: 0,
+    bronze: 2,
+    silver: 6,
+    gold: 12,
+    platinum: 20,
+    diamond: 35,
+    immortal1: 50,
+    immortal2: 65,
+    immortal3: 85,
+    radiant: 120
+};
 
 // Get radiant level from internal LP
 export function getRadiantLevel(radiantLp: number): RadiantLevel {
@@ -111,6 +148,46 @@ export function calculateMMR(skill: Skill): number {
     return hours * wrMultiplier;
 }
 
+// Calculate Area Rank and Stats based on aggregated values
+export function getAreaRankInfo(minutes: number, wins: number, losses: number, abandons: number, placementMinutes: number = 0) {
+    const practiceHours = minutes / 60;
+    const initialHours = placementMinutes / 60;
+    const totalHours = practiceHours + initialHours;
+
+    const totalGames = wins + losses + abandons;
+    const winRate = totalGames > 0 ? wins / totalGames : 0.5;
+    const wrMultiplier = 0.5 + winRate;
+
+    // Area MMR is Quality Hours. Multiplier applied to sum of hours.
+    const areaMmr = totalHours * wrMultiplier;
+
+    // Find Rank
+    let currentRankConfig = AREA_RANK_CONFIGS[0];
+    for (let i = AREA_RANK_CONFIGS.length - 1; i >= 0; i--) {
+        if (areaMmr >= AREA_RANK_CONFIGS[i].minHours) {
+            currentRankConfig = AREA_RANK_CONFIGS[i];
+            break;
+        }
+    }
+
+    // Handle Radiant levels for Area
+    let radiantTitle = '';
+    if (currentRankConfig.rank === 'radiant') {
+        for (let i = AREA_RADIANT_THRESHOLDS.length - 1; i >= 0; i--) {
+            if (areaMmr >= AREA_RADIANT_THRESHOLDS[i].minHours) {
+                radiantTitle = AREA_RADIANT_THRESHOLDS[i].name;
+                break;
+            }
+        }
+    }
+
+    return {
+        mmr: areaMmr,
+        rankConfig: currentRankConfig,
+        radiantTitle: radiantTitle || currentRankConfig.nameEs
+    };
+}
+
 // Calculate Base LP based on duration (Gaussian Distribution)
 // Peak optimal flow state: ~45 mins. Max LP: 30.
 // Penalizes too short (<10m) and too long (>90m) sessions.
@@ -118,7 +195,7 @@ export function calculateBaseLp(minutes: number): number {
     if (minutes < 5) return 0; // Minimum 5 mins to score
 
     // Gaussian Parameters
-    const maxLp = 30;
+    const maxLp = 35; // Increased from 30 to speed up progression
     const optimalDuration = 45; // Center of the bell curve
     const tolerance = 25;       // Standard deviation controls the width
 
@@ -282,15 +359,18 @@ export function applyLpChange(skill: Skill, result: 'win' | 'loss' | 'abandon', 
 }
 
 // Create a new skill with default values
-export function createSkill(name: string, icon: string, color: string): Skill {
+export function createSkill(name: string, icon: string, color: string, area?: string, initialRank: Rank = 'iron'): Skill {
     const now = new Date().toISOString();
+    const placementHours = PLACEMENT_HOURS_MAP[initialRank] || 0;
+
     return {
         id: `skill_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         name,
         icon,
         color,
-        lp: 0,
-        rank: 'iron',
+        area,
+        lp: initialRank === 'iron' ? 0 : 50,
+        rank: initialRank,
         division: 1,
         totalMinutes: 0,
         totalBlocks: 0,
@@ -300,10 +380,13 @@ export function createSkill(name: string, icon: string, color: string): Skill {
         currentStreak: 0,
         bestStreak: 0,
         worstStreak: 0,
-        peakRank: 'iron',
+        peakRank: initialRank,
         peakDivision: 1,
         history: [],
         protectedPromotion: false,
+        mmr: 0,
+        initialRank,
+        placementMinutes: placementHours * 60,
         createdAt: now,
     };
 }

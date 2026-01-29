@@ -11,6 +11,7 @@ import { ActiveBlock } from './pages/ActiveBlock';
 import { ResultSelection } from './pages/ResultSelection';
 import { BlockResult } from './pages/BlockResult';
 import { History } from './pages/History';
+import { Stats } from './pages/Stats';
 import { Profile } from './pages/Profile';
 import { SkillManager } from './pages/SkillManager';
 import { StartBlock } from './pages/StartBlock';
@@ -44,6 +45,7 @@ function AppContent() {
             <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/skills" element={<SkillManager />} />
+                <Route path="/stats" element={<Stats />} />
                 <Route path="/history" element={<History />} />
                 <Route path="/profile" element={<Profile />} />
 

@@ -47,7 +47,9 @@ export interface Skill {
     id: string;
     name: string;
     icon: string;
+    description?: string;
     color: string;
+    area?: string; // Grouping category (e.g. Health, Coding)
     lp: number; // 0-100 per division
     rank: Rank;
     division: number; // 1-3 for most ranks, 1 for immortal/radiant
@@ -63,11 +65,19 @@ export interface Skill {
     worstStreak: number;
     peakRank: Rank;
     peakDivision: number;
-    peakDivision: number;
     history: BlockResult[];
     protectedPromotion: boolean; // free loss after promotion
     mmr: number; // Hidden Matchmaking Rating (Quality Hours)
+    initialRank?: Rank;
+    placementMinutes: number; // Theoretical base hours for Area rank
     createdAt: string;
+}
+
+export interface SkillTemplate {
+    name: string;
+    icon: string;
+    color: string;
+    area?: string;
 }
 
 // Player/user state
@@ -81,6 +91,7 @@ export interface PlayerState {
     currentSeason: number;
     seasonStartDate: string;
     skills: Skill[];
+    areas: string[]; // User defined areas for grouping
     settings: PlayerSettings;
     activeBlockId: string | null;
     activeSkillId: string | null;

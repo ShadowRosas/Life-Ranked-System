@@ -13,7 +13,7 @@ const API_URL = '/api';
 // Action types
 type GameAction =
     | { type: 'LOAD_STATE'; payload: PlayerState }
-    | { type: 'ADD_SKILL'; payload: { name: string; icon: string; color: string; initialRank?: string } }
+    | { type: 'ADD_SKILL'; payload: { name: string; icon: string; color: string; initialRank?: string; area?: string } }
     | { type: 'DELETE_SKILL'; payload: string }
     | { type: 'START_BLOCK'; payload: { skillId: string; durationMinutes: number } }
     | { type: 'END_BLOCK'; payload: { result: 'win' | 'loss' | 'abandon'; notes?: string } }
@@ -21,7 +21,9 @@ type GameAction =
     | { type: 'UPDATE_SETTINGS'; payload: Partial<PlayerState['settings']> }
     | { type: 'CHECK_SEASON' }
     | { type: 'LOGIN_SUCCESS'; payload: PlayerState }
-    | { type: 'LOGOUT' };
+    | { type: 'LOGOUT' }
+    | { type: 'ADD_AREA'; payload: string }
+    | { type: 'DELETE_AREA'; payload: string };
 
 function gameReducer(state: PlayerState, action: GameAction): PlayerState {
 
@@ -36,6 +38,8 @@ function gameReducer(state: PlayerState, action: GameAction): PlayerState {
         case 'DELETE_SKILL': audio.playClick(); break;
         case 'CANCEL_BLOCK': audio.playClick(); break;
         case 'LOGIN_SUCCESS': audio.playWin(); break; // Nice sound on login
+        case 'ADD_AREA': audio.playHover(); break;
+        case 'DELETE_AREA': audio.playClick(); break;
     }
 
     switch (action.type) {
@@ -49,20 +53,17 @@ function gameReducer(state: PlayerState, action: GameAction): PlayerState {
             return createInitialState();
 
         case 'ADD_SKILL': {
+            const initialRank = (action.payload.initialRank as any) || 'iron';
             const newSkill = createSkill(
                 action.payload.name,
                 action.payload.icon,
-                action.payload.color
+                action.payload.color,
+                action.payload.area,
+                initialRank
             );
 
-            // Handle Initial Rank
-            if (action.payload.initialRank && action.payload.initialRank !== 'iron') {
-                const rank = action.payload.initialRank as any;
-                newSkill.rank = rank;
-                newSkill.peakRank = rank;
-                newSkill.lp = 50; // Start in middle of division
-
-                // Add "Placed" history
+            // Add "Placed" history if not iron
+            if (initialRank !== 'iron') {
                 newSkill.history.push({
                     id: generateId('placed'),
                     skillId: newSkill.id,
@@ -73,7 +74,7 @@ function gameReducer(state: PlayerState, action: GameAction): PlayerState {
                     lpChange: 0,
                     rankBefore: 'iron',
                     divisionBefore: 1,
-                    rankAfter: rank,
+                    rankAfter: initialRank,
                     divisionAfter: 1,
                     notes: 'Initial Placement'
                 });
@@ -174,6 +175,13 @@ function gameReducer(state: PlayerState, action: GameAction): PlayerState {
                 settings: { ...state.settings, ...action.payload },
             };
 
+        case 'ADD_AREA':
+            if (state.areas.includes(action.payload)) return state;
+            return { ...state, areas: [...state.areas, action.payload] };
+
+        case 'DELETE_AREA':
+            return { ...state, areas: state.areas.filter(a => a !== action.payload) };
+
         case 'CHECK_SEASON':
             if (shouldStartNewSeason(state.seasonStartDate)) {
                 return applySeasonReset(state);
@@ -188,12 +196,14 @@ function gameReducer(state: PlayerState, action: GameAction): PlayerState {
 interface GameContextValue {
     state: PlayerState;
     dispatch: React.Dispatch<GameAction>;
-    addSkill: (name: string, icon: string, color: string, initialRank?: string) => void;
+    addSkill: (name: string, icon: string, color: string, initialRank?: string, area?: string) => void;
     deleteSkill: (id: string) => void;
     startBlock: (skillId: string, durationMinutes: number) => void;
     endBlock: (result: 'win' | 'loss' | 'abandon', notes?: string) => void;
     cancelBlock: () => void;
     getActiveSkill: () => Skill | undefined;
+    addArea: (name: string) => void;
+    deleteArea: (name: string) => void;
     login: (token: string) => Promise<boolean>;
     logout: () => void;
     isAuthenticated: boolean;
@@ -223,8 +233,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         }
     }, [state]);
 
-    const addSkill = (name: string, icon: string, color: string, initialRank?: string) => {
-        dispatch({ type: 'ADD_SKILL', payload: { name, icon, color, initialRank } });
+    const addSkill = (name: string, icon: string, color: string, initialRank?: string, area?: string) => {
+        dispatch({ type: 'ADD_SKILL', payload: { name, icon, color, initialRank, area } });
     };
 
     const deleteSkill = (id: string) => {
@@ -241,6 +251,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     const cancelBlock = () => {
         dispatch({ type: 'CANCEL_BLOCK' });
+    };
+
+    const addArea = (name: string) => {
+        dispatch({ type: 'ADD_AREA', payload: name });
+    };
+
+    const deleteArea = (name: string) => {
+        dispatch({ type: 'DELETE_AREA', payload: name });
     };
 
     const getActiveSkill = () => {
@@ -284,6 +302,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
                 endBlock,
                 cancelBlock,
                 getActiveSkill,
+                addArea,
+                deleteArea,
                 login,
                 logout,
                 isAuthenticated: !!state.googleId // Check if authenticated via Google

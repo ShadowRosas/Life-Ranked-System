@@ -3,7 +3,7 @@
 // ==========================================
 
 import { NavLink } from 'react-router-dom';
-import { Home, Clock, History, User, Plus, LogOut } from 'lucide-react';
+import { Home, Clock, History, User, Plus, LogOut, BarChart2 } from 'lucide-react';
 import { useGame } from '../context/GameContext'; // Import useGame
 import { useLanguage } from '../context/LanguageContext';
 import { LanguageToggle } from './LanguageToggle';
@@ -24,6 +24,10 @@ export function Navigation() {
                 <NavLink to="/" className="navigation__link">
                     <Home size={20} />
                     <span>{t('nav_dashboard')}</span>
+                </NavLink>
+                <NavLink to="/stats" className="navigation__link">
+                    <BarChart2 size={20} />
+                    <span>Stats</span>
                 </NavLink>
                 <NavLink to="/history" className="navigation__link">
                     <History size={20} />

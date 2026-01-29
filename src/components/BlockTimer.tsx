@@ -5,6 +5,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
+import { audio } from '../lib/audio';
 import './BlockTimer.css';
 
 interface BlockTimerProps {
@@ -36,6 +37,7 @@ export function BlockTimer({
             setRemainingSeconds(prev => {
                 if (prev <= 1) {
                     clearInterval(interval);
+                    audio.playTimerComplete();
                     onComplete();
                     return 0;
                 }
